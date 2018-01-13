@@ -1,9 +1,11 @@
 using System;
+using System.Reactive.Subjects;
+using Microsoft.Reactive.Testing;
 using Xunit;
 
 namespace ClassLibrary1.Tests
 {
-    public class UnitTest1
+    public class UnitTest1 : ReactiveTest
     {
         [Theory]
         [InlineData(1, 2)]
@@ -14,6 +16,29 @@ namespace ClassLibrary1.Tests
             var actual = new Class1().Double(x);
 
             Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void DelayDouble_Simple1()
+        {
+            var testScheduler = new TestScheduler();
+            var results = testScheduler.CreateObserver<int>();
+
+            var testSource = testScheduler.CreateColdObservable(
+                OnNext(0, 10),
+                OnCompleted<int>(0)
+            );
+            new Class1().DelayDouble(testSource).Subscribe(results);
+
+            testScheduler.Start();
+            testScheduler.AdvanceBy(100);
+
+            //results.Messages.AssertEqual(
+            //    OnNext(10, 20),
+            //    OnCompleted<int>(10)
+            //    );
+
+            Assert.Equal(2, results.Messages.Count);
         }
     }
 }
